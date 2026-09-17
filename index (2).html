@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>주말 집밥 식단</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍚</text></svg>">
+<style>
+  :root{
+    --bg:#faf7f2; --card:#ffffff; --ink:#2c2420; --sub:#8a7f74;
+    --accent:#d97a4d; --accent-soft:#fbe6da; --line:#eee4da;
+    --main-c:#e07a5f; --soup-c:#3d8a8a; --side-c:#c9a227;
+    --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:var(--bg);color:var(--ink);padding-bottom:70px;}
+  header{position:sticky;top:0;background:var(--bg);z-index:10;padding:14px 16px 8px;border-bottom:1px solid var(--line);}
+  h1{font-size:18px;margin:0 0 10px;}
+  .weeknav{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .weeknav button{background:none;border:none;font-size:20px;color:var(--sub);padding:4px 8px;}
+  .weeknav .label{font-size:14px;font-weight:600;text-align:center;flex:1;}
+  .toolbar{display:flex;gap:8px;margin-top:10px;}
+  .btn{border:none;border-radius:12px;padding:10px 14px;font-size:14px;font-weight:600;cursor:pointer;}
+  .btn-primary{background:var(--accent);color:#fff;flex:1;}
+  .btn-ghost{background:var(--accent-soft);color:var(--accent);}
+  main{padding:14px 16px 20px;}
+  .meal-card{background:var(--card);border-radius:var(--radius);padding:14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+  .meal-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+  .meal-title h2{font-size:15px;margin:0;}
+  .reroll-all{background:none;border:none;color:var(--sub);font-size:13px;}
+  .row{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;}
+  .role-tag{font-size:11px;font-weight:700;color:#fff;border-radius:6px;padding:2px 6px;min-width:34px;text-align:center;flex-shrink:0;margin-top:3px;}
+  .role-tag.main{background:var(--main-c);}
+  .role-tag.soup{background:var(--soup-c);}
+  .role-tag.side{background:var(--side-c);}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;flex:1;}
+  .chip{background:var(--bg);border:1px solid var(--line);border-radius:20px;padding:6px 12px;font-size:13.5px;cursor:pointer;}
+  .chip.empty{color:var(--sub);border-style:dashed;}
+  .chip .x{margin-left:6px;color:var(--sub);}
+  .side-controls{display:flex;gap:4px;}
+  .side-controls button{background:none;border:1px solid var(--line);border-radius:8px;width:26px;height:26px;font-size:14px;color:var(--sub);}
+  /* tabs */
+  .tabbar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;z-index:20;}
+  .tabbar button{flex:1;border:none;background:none;padding:10px 0 8px;font-size:12px;color:var(--sub);}
+  .tabbar button.active{color:var(--accent);font-weight:700;}
+  .tabbar .ico{display:block;font-size:18px;margin-bottom:2px;}
+  /* menu management */
+  .catbar{display:flex;gap:8px;padding:10px 16px 0;}
+  .catbar button{flex:1;border:none;border-radius:10px;padding:8px 0;font-size:13px;font-weight:600;background:var(--card);color:var(--sub);}
+  .catbar button.active{background:var(--accent);color:#fff;}
+  .menu-list{padding:12px 16px 90px;}
+  .menu-item{background:var(--card);border-radius:12px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;}
+  .menu-item .name{font-weight:600;font-size:14.5px;}
+  .menu-item .meta{font-size:12px;color:var(--sub);}
+  .fab{position:fixed;bottom:78px;right:18px;background:var(--accent);color:#fff;border:none;width:52px;height:52px;border-radius:50%;font-size:26px;box-shadow:0 4px 10px rgba(217,122,77,.4);z-index:15;}
+  /* modal */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:30;display:flex;align-items:flex-end;}
+  .sheet{background:#fff;width:100%;max-height:88vh;overflow-y:auto;border-radius:20px 20px 0 0;padding:18px;animation:up .18s ease-out;}
+  @keyframes up{from{transform:translateY(30px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+  .sheet h3{margin:0 0 4px;font-size:17px;}
+  .sheet .cat{font-size:12px;color:var(--sub);margin-bottom:12px;}
+  .sheet pre{white-space:pre-wrap;font-family:inherit;font-size:14px;line-height:1.6;background:var(--bg);border-radius:12px;padding:12px;}
+  .sheet-close{position:sticky;top:0;text-align:right;}
+  .sheet-close button{background:none;border:none;font-size:22px;color:var(--sub);}
+  label{display:block;font-size:13px;color:var(--sub);margin:12px 0 4px;}
+  input[type=text],textarea,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;}
+  textarea{min-height:90px;resize:vertical;}
+  .seg{display:flex;gap:6px;margin-top:4px;}
+  .seg button{flex:1;padding:8px 0;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:13px;}
+  .seg button.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .pick-list{max-height:200px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;margin-top:6px;}
+  .pick-list div{padding:10px 12px;font-size:14px;border-bottom:1px solid var(--line);}
+  .pick-list div:last-child{border-bottom:none;}
+  .pick-list div.sel{background:var(--accent-soft);color:var(--accent);font-weight:600;}
+  .modal-actions{display:flex;gap:8px;margin-top:16px;}
+  .modal-actions .btn{flex:1;}
+  .btn-danger{background:#fdeceb;color:#c0392b;}
+  .setup{padding:40px 20px;max-width:420px;margin:0 auto;}
+  .empty-state{text-align:center;color:var(--sub);padding:30px 10px;font-size:14px;}
+  .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#2c2420;color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;z-index:50;opacity:0;transition:opacity .2s;}
+  .toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<div id="setupScreen" class="setup" style="display:none;">
+  <h1>🍚 주말 집밥 식단</h1>
+  <p style="color:var(--sub);font-size:14px;">처음 실행하는 기기예요. Supabase 프로젝트의 URL과 anon key를 입력해주세요. (한 번만 입력하면 이 기기에 저장돼요)</p>
+  <label>Supabase URL</label>
+  <input type="text" id="setupUrl" placeholder="https://xxxx.supabase.co">
+  <label>Supabase anon key</label>
+  <input type="text" id="setupKey" placeholder="eyJhbGciOi...">
+  <div class="modal-actions"><button class="btn btn-primary" style="width:100%" onclick="saveSetup()">시작하기</button></div>
+</div>
+
+<div id="app" style="display:none;">
+  <header>
+    <h1>🍚 주말 집밥 식단</h1>
+    <div class="weeknav">
+      <button onclick="changeWeek(-1)">◀</button>
+      <div class="label" id="weekLabel">-</div>
+      <button onclick="changeWeek(1)">▶</button>
+    </div>
+    <div class="toolbar" id="planToolbar">
+      <button class="btn btn-primary" onclick="autoGenerateWeek()">🎲 전체 자동구성</button>
+    </div>
+  </header>
+
+  <main id="planView"></main>
+  <main id="menuView" style="display:none;">
+    <div class="catbar">
+      <button data-cat="main" onclick="setMgmtCat('main')">메인</button>
+      <button data-cat="soup" onclick="setMgmtCat('soup')">국</button>
+      <button data-cat="side" onclick="setMgmtCat('side')">반찬</button>
+    </div>
+    <div class="menu-list" id="menuList"></div>
+  </main>
+
+  <div class="tabbar">
+    <button id="tabPlan" class="active" onclick="showTab('plan')"><span class="ico">📅</span>이번 주 식단</button>
+    <button id="tabMenu" onclick="showTab('menu')"><span class="ico">📖</span>메뉴 관리</button>
+  </div>
+  <button class="fab" id="addMenuFab" style="display:none;" onclick="openAddMenuModal()">+</button>
+</div>
+
+<div id="modalRoot"></div>
+<div class="toast" id="toast"></div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script>
+/* ===================== 설정 / 초기화 ===================== */
+let supabase;
+const LS_URL='meal_planner_sb_url', LS_KEY='meal_planner_sb_key';
+
+function initSupabase(){
+  const url = localStorage.getItem(LS_URL);
+  const key = localStorage.getItem(LS_KEY);
+  if(!url || !key){
+    document.getElementById('setupScreen').style.display='block';
+    return false;
+  }
+  supabase = window.supabase.createClient(url, key);
+  document.getElementById('app').style.display='block';
+  return true;
+}
+function saveSetup(){
+  const url = document.getElementById('setupUrl').value.trim();
+  const key = document.getElementById('setupKey').value.trim();
+  if(!url || !key){ toast('URL과 key를 모두 입력해주세요'); return; }
+  localStorage.setItem(LS_URL, url);
+  localStorage.setItem(LS_KEY, key);
+  location.reload();
+}
+
+/* ===================== 상태 ===================== */
+let allMenus = { main:[], soup:[], side:[] };
+let weekStart = getUpcomingSaturday(new Date());
+let slots = {}; // key: day_meal_role_position -> slot row
+let mgmtCat = 'main';
+
+const MEALS = [
+  {day:'sat', meal:'brunch', label:'토요일 · 아침점심'},
+  {day:'sat', meal:'dinner', label:'토요일 · 저녁'},
+  {day:'sun', meal:'brunch', label:'일요일 · 아침점심'},
+  {day:'sun', meal:'dinner', label:'일요일 · 저녁'},
+];
+
+function getUpcomingSaturday(d){
+  const date = new Date(d);
+  const day = date.getDay(); // 0 sun .. 6 sat
+  let diff;
+  if(day===6) diff=0;
+  else diff = (6-day+7)%7;
+  date.setDate(date.getDate()+diff);
+  date.setHours(0,0,0,0);
+  return date;
+}
+function fmtDate(d){ return `${d.getMonth()+1}/${d.getDate()}`; }
+function isoDate(d){ return d.toISOString().slice(0,10); }
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+/* ===================== 데이터 로드 ===================== */
+async function loadMenus(){
+  const {data, error} = await supabase.from('menus').select('*').order('name');
+  if(error){ toast('메뉴 로드 실패: '+error.message); return; }
+  allMenus = {main:[], soup:[], side:[]};
+  (data||[]).forEach(m=>allMenus[m.category].push(m));
+}
+
+async function loadSlots(){
+  const ws = isoDate(weekStart);
+  const {data, error} = await supabase.from('plan_slots').select('*, menus(*)').eq('week_start', ws);
+  if(error){ toast('식단 로드 실패: '+error.message); return; }
+  slots = {};
+  (data||[]).forEach(s=>{
+    slots[slotKey(s.day,s.meal,s.role,s.position)] = s;
+  });
+}
+function slotKey(day,meal,role,pos){ return `${day}_${meal}_${role}_${pos}`; }
+
+/* ===================== 렌더링 ===================== */
+function renderWeekLabel(){
+  const end = new Date(weekStart); end.setDate(end.getDate()+1);
+  document.getElementById('weekLabel').textContent = `${fmtDate(weekStart)}(토) ~ ${fmtDate(end)}(일)`;
+}
+
+function sideCountFor(day,meal){
+  let n=0;
+  for(let p=1;p<=5;p++){ if(slots[slotKey(day,meal,'side',p)]) n=p; }
+  return Math.max(n,2); // 최소 2개는 자리 보여주기 (비어있어도)
+}
+
+function renderPlan(){
+  renderWeekLabel();
+  const el = document.getElementById('planView');
+  el.innerHTML='';
+  MEALS.forEach(m=>{
+    const card = document.createElement('div');
+    card.className='meal-card';
+    const sideCount = sideCountFor(m.day, m.meal);
+
+    let sidesHtml = '';
+    for(let p=1;p<=sideCount;p++){
+      sidesHtml += chipHtml(m.day,m.meal,'side',p);
+    }
+
+    card.innerHTML = `
+      <div class="meal-title">
+        <h2>${m.label}</h2>
+        <button class="reroll-all" onclick="rerollMeal('${m.day}','${m.meal}')">🎲 이 끼니 다시뽑기</button>
+      </div>
+      <div class="row">
+        <span class="role-tag main">메인</span>
+        <div class="chips">${chipHtml(m.day,m.meal,'main',1)}</div>
+      </div>
+      <div class="row">
+        <span class="role-tag soup">국</span>
+        <div class="chips">${chipHtml(m.day,m.meal,'soup',1)}</div>
+      </div>
+      <div class="row">
+        <span class="role-tag side">반찬</span>
+        <div class="chips">${sidesHtml}</div>
+        <div class="side-controls">
+          ${sideCount<3?`<button onclick="addSideSlot('${m.day}','${m.meal}')">+</button>`:''}
+          ${sideCount>2?`<button onclick="removeSideSlot('${m.day}','${m.meal}',${sideCount})">−</button>`:''}
+        </div>
+      </div>
+    `;
+    el.appendChild(card);
+  });
+}
+
+function chipHtml(day,meal,role,pos){
+  const s = slots[slotKey(day,meal,role,pos)];
+  if(!s || (!s.menu_id && !s.custom_name)){
+    return `<span class="chip empty" onclick="openPickModal('${day}','${meal}','${role}',${pos})">+ 선택</span>`;
+  }
+  const name = s.menus ? s.menus.name : s.custom_name;
+  return `<span class="chip" onclick="openRecipeModal('${day}','${meal}','${role}',${pos})">${escapeHtml(name)}</span>`;
+}
+function escapeHtml(str){ return (str||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* side slot count control (뷰상의 편의 기능, DB엔 값 있을때만 저장됨) */
+window._extraSideView = window._extraSideView || {};
+function addSideSlot(day,meal){
+  const key = day+'_'+meal;
+  window._extraSideView[key] = (window._extraSideView[key]||sideCountFor(day,meal))+1;
+  renderPlan();
+}
+function removeSideSlot(day,meal,count){
+  // 마지막 반찬 슬롯 비우고 삭제
+  const pos = count;
+  const key = slotKey(day,meal,'side',pos);
+  const s = slots[key];
+  if(s && s.id){
+    supabase.from('plan_slots').delete().eq('id', s.id).then(()=>{ delete slots[key]; renderPlan(); });
+  } else {
+    delete slots[key];
+    renderPlan();
+  }
+}
+// override sideCountFor to respect temporary +/- view state
+const _origSideCountFor = sideCountFor;
+sideCountFor = function(day,meal){
+  const key=day+'_'+meal;
+  const base = _origSideCountFor(day,meal);
+  const view = window._extraSideView[key];
+  return view ? Math.max(view, base) : base;
+};
+
+/* ===================== 자동구성 ===================== */
+function pickWeighted(pool, excludeIds){
+  const avail = pool.filter(m=>!excludeIds.has(m.id));
+  const list = avail.length ? avail : pool;
+  if(!list.length) return null;
+  return list[Math.floor(Math.random()*list.length)];
+}
+function soupPreferredWeight(mainWeight){
+  if(mainWeight==='heavy') return 'light';
+  if(mainWeight==='light') return 'medium';
+  return 'light';
+}
+
+async function autoGenerateWeek(){
+  if(!confirm('이번 주 식단을 새로 자동구성할까요? 기존 선택은 덮어씌워집니다.')) return;
+  const usedMain=new Set(), usedSoup=new Set(), usedSide=new Set();
+  const upserts = [];
+
+  for(const m of MEALS){
+    // 메인
+    const main = pickWeighted(allMenus.main, usedMain);
+    if(main) usedMain.add(main.id);
+    // 국 (메인 weight와 궁합)
+    const prefW = main ? soupPreferredWeight(main.weight) : null;
+    let soupPool = allMenus.soup.filter(s=>s.weight===prefW);
+    if(!soupPool.length) soupPool = allMenus.soup;
+    const soup = pickWeighted(soupPool, usedSoup);
+    if(soup) usedSoup.add(soup.id);
+    // 반찬 3개
+    const sideCount = 3;
+    const chosenSides = [];
+    for(let i=0;i<sideCount;i++){
+      const side = pickWeighted(allMenus.side, usedSide);
+      if(side){ usedSide.add(side.id); chosenSides.push(side); }
+    }
+
+    if(main) upserts.push(rowFor(m.day,m.meal,'main',1,main.id));
+    if(soup) upserts.push(rowFor(m.day,m.meal,'soup',1,soup.id));
+    chosenSides.forEach((s,idx)=> upserts.push(rowFor(m.day,m.meal,'side',idx+1,s.id)));
+  }
+
+  const {error} = await supabase.from('plan_slots').upsert(upserts, {onConflict:'week_start,day,meal,role,position'});
+  if(error){ toast('자동구성 실패: '+error.message); return; }
+  window._extraSideView = {};
+  await loadSlots();
+  renderPlan();
+  toast('식단을 새로 구성했어요');
+}
+
+function rowFor(day,meal,role,position,menu_id){
+  return { week_start: isoDate(weekStart), day, meal, role, position, menu_id, custom_name:null, custom_recipe:null };
+}
+
+async function rerollMeal(day,meal){
+  const usedMain=new Set(), usedSoup=new Set(), usedSide=new Set();
+  // 다른 끼니에서 이미 쓴 메뉴는 최대한 피하기
+  Object.values(slots).forEach(s=>{
+    if(s.day===day && s.meal===meal) return;
+    if(s.role==='main' && s.menu_id) usedMain.add(s.menu_id);
+    if(s.role==='soup' && s.menu_id) usedSoup.add(s.menu_id);
+    if(s.role==='side' && s.menu_id) usedSide.add(s.menu_id);
+  });
+  const main = pickWeighted(allMenus.main, usedMain);
+  const prefW = main ? soupPreferredWeight(main.weight) : null;
+  let soupPool = allMenus.soup.filter(s=>s.weight===prefW);
+  if(!soupPool.length) soupPool = allMenus.soup;
+  const soup = pickWeighted(soupPool, usedSoup);
+  const sideCount = sideCountFor(day,meal);
+  const chosenSides=[];
+  for(let i=0;i<sideCount;i++){
+    const side = pickWeighted(allMenus.side, usedSide);
+    if(side){ usedSide.add(side.id); chosenSides.push(side); }
+  }
+  const upserts=[];
+  if(main) upserts.push(rowFor(day,meal,'main',1,main.id));
+  if(soup) upserts.push(rowFor(day,meal,'soup',1,soup.id));
+  chosenSides.forEach((s,idx)=>upserts.push(rowFor(day,meal,'side',idx+1,s.id)));
+
+  const {error} = await supabase.from('plan_slots').upsert(upserts, {onConflict:'week_start,day,meal,role,position'});
+  if(error){ toast('실패: '+error.message); return; }
+  await loadSlots();
+  renderPlan();
+}
+
+/* ===================== 레시피 모달 ===================== */
+function openRecipeModal(day,meal,role,pos){
+  const s = slots[slotKey(day,meal,role,pos)];
+  if(!s) return;
+  const name = s.menus ? s.menus.name : s.custom_name;
+  const recipe = s.menus ? s.menus.recipe : s.custom_recipe;
+  const cat = {main:'메인',soup:'국',side:'반찬'}[role];
+  showSheet(`
+    <div class="sheet-close"><button onclick="closeSheet()">✕</button></div>
+    <h3>${escapeHtml(name)}</h3>
+    <div class="cat">${cat}</div>
+    <pre>${escapeHtml(recipe || '등록된 레시피가 없어요.')}</pre>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="openPickModal('${day}','${meal}','${role}',${pos})">다른 메뉴로 변경</button>
+      <button class="btn btn-danger" onclick="clearSlot('${day}','${meal}','${role}',${pos})">비우기</button>
+    </div>
+  `);
+}
+
+async function clearSlot(day,meal,role,pos){
+  const s = slots[slotKey(day,meal,role,pos)];
+  if(s && s.id){ await supabase.from('plan_slots').delete().eq('id', s.id); }
+  delete slots[slotKey(day,meal,role,pos)];
+  closeSheet();
+  renderPlan();
+}
+
+/* ===================== 메뉴 선택 / 직접입력 모달 ===================== */
+let pickCtx = null;
+function openPickModal(day,meal,role,pos){
+  pickCtx = {day,meal,role,pos};
+  const pool = allMenus[role] || [];
+  const listHtml = pool.map(m=>`<div onclick="choosePick('${m.id}')">${escapeHtml(m.name)}</div>`).join('') || '<div style="color:var(--sub)">등록된 메뉴가 없어요</div>';
+  const catLabel = {main:'메인',soup:'국',side:'반찬'}[role];
+  showSheet(`
+    <div class="sheet-close"><button onclick="closeSheet()">✕</button></div>
+    <h3>${catLabel} 선택</h3>
+    <div class="pick-list">${listHtml}</div>
+    <label>또는 이번 끼니만 직접 입력</label>
+    <input type="text" id="customName" placeholder="메뉴 이름">
+    <label>레시피 (선택)</label>
+    <textarea id="customRecipe" placeholder="재료 / 만드는 법을 적어주세요"></textarea>
+    <label><input type="checkbox" id="saveToMenus" style="width:auto;display:inline-block;margin-right:6px;">내 메뉴 목록에도 저장하기</label>
+    <div class="modal-actions">
+      <button class="btn btn-primary" style="width:100%" onclick="chooseCustom()">이 메뉴로 저장</button>
+    </div>
+  `);
+}
+
+async function choosePick(menuId){
+  const {day,meal,role,pos} = pickCtx;
+  const row = rowFor(day,meal,role,pos,menuId);
+  const {error} = await supabase.from('plan_slots').upsert([row], {onConflict:'week_start,day,meal,role,position'});
+  if(error){ toast('저장 실패: '+error.message); return; }
+  await loadSlots();
+  closeSheet();
+  renderPlan();
+}
+
+async function chooseCustom(){
+  const {day,meal,role,pos} = pickCtx;
+  const name = document.getElementById('customName').value.trim();
+  const recipe = document.getElementById('customRecipe').value.trim();
+  const saveToMenus = document.getElementById('saveToMenus').checked;
+  if(!name){ toast('메뉴 이름을 입력해주세요'); return; }
+
+  let menu_id = null;
+  if(saveToMenus){
+    const {data, error} = await supabase.from('menus').insert([{name, category:role, recipe: recipe||null, is_custom:true}]).select().single();
+    if(error){ toast('메뉴 저장 실패: '+error.message); return; }
+    menu_id = data.id;
+    allMenus[role].push(data);
+  }
+
+  const row = menu_id
+    ? rowFor(day,meal,role,pos,menu_id)
+    : { week_start: isoDate(weekStart), day, meal, role, position: pos, menu_id:null, custom_name:name, custom_recipe:recipe||null };
+
+  const {error} = await supabase.from('plan_slots').upsert([row], {onConflict:'week_start,day,meal,role,position'});
+  if(error){ toast('저장 실패: '+error.message); return; }
+  await loadSlots();
+  closeSheet();
+  renderPlan();
+}
+
+/* ===================== 메뉴 관리 화면 ===================== */
+function setMgmtCat(cat){
+  mgmtCat = cat;
+  document.querySelectorAll('.catbar button').forEach(b=>b.classList.toggle('active', b.dataset.cat===cat));
+  renderMenuList();
+}
+function renderMenuList(){
+  const el = document.getElementById('menuList');
+  const list = allMenus[mgmtCat] || [];
+  if(!list.length){ el.innerHTML = '<div class="empty-state">아직 등록된 메뉴가 없어요. 오른쪽 아래 + 버튼으로 추가해보세요.</div>'; return; }
+  el.innerHTML = list.map(m=>`
+    <div class="menu-item" onclick="openMenuDetail('${m.id}')">
+      <div>
+        <div class="name">${escapeHtml(m.name)}</div>
+        <div class="meta">${m.weight?({light:'가벼움',medium:'보통',heavy:'든든함'}[m.weight]):''}${m.is_custom?' · 직접추가':''}</div>
+      </div>
+      <span style="color:var(--sub)">›</span>
+    </div>
+  `).join('');
+}
+function openMenuDetail(id){
+  const m = [...allMenus.main,...allMenus.soup,...allMenus.side].find(x=>x.id===id);
+  if(!m) return;
+  const catLabel = {main:'메인',soup:'국',side:'반찬'}[m.category];
+  showSheet(`
+    <div class="sheet-close"><button onclick="closeSheet()">✕</button></div>
+    <h3>${escapeHtml(m.name)}</h3>
+    <div class="cat">${catLabel}</div>
+    <pre>${escapeHtml(m.recipe || '등록된 레시피가 없어요.')}</pre>
+    <div class="modal-actions">
+      <button class="btn btn-danger" style="width:100%" onclick="deleteMenu('${m.id}','${m.category}')">이 메뉴 삭제</button>
+    </div>
+  `);
+}
+async function deleteMenu(id, cat){
+  if(!confirm('이 메뉴를 삭제할까요? 이미 배정된 식단에서도 사라져요.')) return;
+  const {error} = await supabase.from('menus').delete().eq('id', id);
+  if(error){ toast('삭제 실패: '+error.message); return; }
+  allMenus[cat] = allMenus[cat].filter(m=>m.id!==id);
+  closeSheet();
+  renderMenuList();
+  await loadSlots();
+  renderPlan();
+}
+function openAddMenuModal(){
+  showSheet(`
+    <div class="sheet-close"><button onclick="closeSheet()">✕</button></div>
+    <h3>새 메뉴 추가</h3>
+    <label>분류</label>
+    <div class="seg" id="addCatSeg">
+      <button class="on" data-v="main" onclick="segPick(this)">메인</button>
+      <button data-v="soup" onclick="segPick(this)">국</button>
+      <button data-v="side" onclick="segPick(this)">반찬</button>
+    </div>
+    <label>메뉴 이름</label>
+    <input type="text" id="addName" placeholder="예: 김치볶음밥">
+    <label>비중 (자동구성 궁합에 사용, 선택)</label>
+    <div class="seg" id="addWeightSeg">
+      <button class="on" data-v="light" onclick="segPick(this)">가벼움</button>
+      <button data-v="medium" onclick="segPick(this)">보통</button>
+      <button data-v="heavy" onclick="segPick(this)">든든함</button>
+    </div>
+    <label>레시피 (선택)</label>
+    <textarea id="addRecipe" placeholder="재료 / 만드는 법을 적어주세요"></textarea>
+    <div class="modal-actions">
+      <button class="btn btn-primary" style="width:100%" onclick="submitAddMenu()">추가하기</button>
+    </div>
+  `);
+  setMgmtCatFromFab();
+}
+function setMgmtCatFromFab(){
+  document.querySelectorAll('#addCatSeg button').forEach(b=>b.classList.toggle('on', b.dataset.v===mgmtCat));
+}
+function segPick(btn){
+  [...btn.parentElement.children].forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+async function submitAddMenu(){
+  const cat = document.querySelector('#addCatSeg button.on').dataset.v;
+  const weight = document.querySelector('#addWeightSeg button.on').dataset.v;
+  const name = document.getElementById('addName').value.trim();
+  const recipe = document.getElementById('addRecipe').value.trim();
+  if(!name){ toast('메뉴 이름을 입력해주세요'); return; }
+  const {data, error} = await supabase.from('menus').insert([{name, category:cat, weight, recipe: recipe||null, is_custom:true}]).select().single();
+  if(error){ toast('추가 실패: '+error.message); return; }
+  allMenus[cat].push(data);
+  closeSheet();
+  mgmtCat = cat;
+  setMgmtCat(cat);
+  toast('메뉴를 추가했어요');
+}
+
+/* ===================== 공통 시트 / 탭 ===================== */
+function showSheet(html){
+  document.getElementById('modalRoot').innerHTML = `<div class="overlay" onclick="if(event.target===this)closeSheet()"><div class="sheet">${html}</div></div>`;
+}
+function closeSheet(){ document.getElementById('modalRoot').innerHTML=''; }
+
+function showTab(tab){
+  document.getElementById('planView').style.display = tab==='plan' ? 'block':'none';
+  document.getElementById('menuView').style.display = tab==='menu' ? 'block':'none';
+  document.getElementById('planToolbar').style.display = tab==='plan' ? 'flex':'none';
+  document.getElementById('addMenuFab').style.display = tab==='menu' ? 'block':'none';
+  document.getElementById('tabPlan').classList.toggle('active', tab==='plan');
+  document.getElementById('tabMenu').classList.toggle('active', tab==='menu');
+  if(tab==='menu') renderMenuList();
+}
+
+function changeWeek(delta){
+  weekStart.setDate(weekStart.getDate()+delta*7);
+  window._extraSideView = {};
+  loadSlots().then(renderPlan);
+}
+
+/* ===================== 시작 ===================== */
+(async function start(){
+  if(!initSupabase()) return;
+  await loadMenus();
+  await loadSlots();
+  renderPlan();
+  setMgmtCat('main');
+})();
+</script>
+</body>
+</html>
